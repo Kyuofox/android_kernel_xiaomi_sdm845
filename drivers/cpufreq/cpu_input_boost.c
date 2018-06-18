@@ -67,6 +67,10 @@ module_param(dynamic_stune_boost, short, 0644);
 
 module_param(dynamic_sched_boost, bool, 0644);
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+static bool stune_boost_active;
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
 struct boost_drv {
 	struct delayed_work input_unboost;
 	struct delayed_work max_unboost;
@@ -166,7 +170,8 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	set_boost_bit(b, INPUT_BOOST);
 	
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-	do_stune_boost("top-app", dynamic_stune_boost);
+	if (!do_stune_boost("top-app", dynamic_stune_boost));
+		stune_boost_active = true;
 	#endif
 
 	if (dynamic_sched_boost)
@@ -196,7 +201,8 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 		return;
 
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-	do_stune_boost("top-app", dynamic_stune_boost);
+	if (!do_stune_boost("top-app", dynamic_stune_boost));
+		stune_boost_active = true;
 	#endif
 
 	do {
@@ -235,7 +241,10 @@ static void input_unboost_worker(struct work_struct *work)
 	wake_up(&b->boost_waitq);
 	
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-	reset_stune_boost("top-app");
+	if (stune_boost_active) {
+		reset_stune_boost("top-app");
+		stune_boost_active = false;
+	}
 	#endif
 }
 
@@ -248,7 +257,10 @@ static void max_unboost_worker(struct work_struct *work)
 	wake_up(&b->boost_waitq);
 	
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-	reset_stune_boost("top-app");
+	if (stune_boost_active) {
+		reset_stune_boost("top-app");
+		stune_boost_active = false;
+	}
 	#endif
 }
 
@@ -379,7 +391,10 @@ free_handle:
 static void cpu_input_boost_input_disconnect(struct input_handle *handle)
 {
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-	reset_stune_boost("top-app");
+	if (stune_boost_active) {
+		reset_stune_boost("top-app");
+		stune_boost_active = false;
+	}
 	#endif
 	
 	if (dynamic_sched_boost)
