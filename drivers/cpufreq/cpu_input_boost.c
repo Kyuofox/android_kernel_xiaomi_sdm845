@@ -14,6 +14,7 @@
 #include <linux/slab.h>
 #include <linux/version.h>
 #include <linux/sched.h>
+#include <linux/cpuset.h>
 
 /* The sched_param struct is located elsewhere in newer kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
@@ -201,6 +202,8 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 	if (get_boost_state(b) & SCREEN_OFF)
 		return;
 
+	do_hp_cpuset();
+
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	if (!do_stune_boost("top-app", dynamic_stune_boost, &boost_slot));
 		stune_boost_active = true;
@@ -256,6 +259,8 @@ static void max_unboost_worker(struct work_struct *work)
 
 	clear_boost_bit(b, MAX_BOOST);
 	wake_up(&b->boost_waitq);
+	
+	do_lp_cpuset();
 	
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	if (stune_boost_active) {
@@ -391,6 +396,8 @@ free_handle:
 
 static void cpu_input_boost_input_disconnect(struct input_handle *handle)
 {
+	do_lp_cpuset();
+	
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	if (stune_boost_active) {
 		reset_stune_boost("top-app", boost_slot);
