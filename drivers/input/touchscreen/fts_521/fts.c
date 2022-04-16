@@ -4112,12 +4112,13 @@ static irqreturn_t fts_event_handler(int irq, void *ts_info)
 	}
 	input_sync(info->input_dev);
 	info->irq_status = false;
-	if (!info->touch_id)
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
-	if (wait_queue_complete)
-		wake_up(&info->wait_queue);
-	else
-		logError(1, "%s: haven't complete init wait_queue", tag);
+    if (!info->touch_id) {
+	    if (wait_queue_complete)
+		    wake_up(&info->wait_queue);
+	    else
+		    logError(1, "%s: haven't complete init wait_queue", tag);
+	}
 #endif
 	return IRQ_HANDLED;
 }
