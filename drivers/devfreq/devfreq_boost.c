@@ -54,6 +54,8 @@ static void devfreq_max_unboost(struct work_struct *work);
 }
 
 static struct df_boost_drv df_boost_drv_g __read_mostly = {
+	BOOST_DEV_INIT(df_boost_drv_g, DEVFREQ_CPUBW,
+		       CONFIG_DEVFREQ_CPUBW_BOOST_FREQ),
 	BOOST_DEV_INIT(df_boost_drv_g, DEVFREQ_LLCCBW,
 		       CONFIG_DEVFREQ_LLCCBW_BOOST_FREQ)
 };
